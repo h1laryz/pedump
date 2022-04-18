@@ -13,17 +13,32 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="pedump">
+      <UniqueIdentifier>{75144d4d-69dd-403c-8b07-859a56e07e23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pch">
+      <UniqueIdentifier>{e7fd99e9-2c93-4072-a6d1-5055105c4c35}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stofu-preinterview-task.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pedump.cpp">
+      <Filter>pedump</Filter>
+    </ClCompile>
     <ClCompile Include="pch.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>pch</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="pedump.h">
+      <Filter>pedump</Filter>
+    </ClInclude>
     <ClInclude Include="pch.h">
+      <Filter>pch</Filter>
+    </ClInclude>
+    <ClInclude Include="import.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

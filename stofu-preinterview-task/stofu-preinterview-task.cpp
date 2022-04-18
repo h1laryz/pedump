@@ -2,9 +2,14 @@
 #include <iostream>
 #include <cstdlib>
 #include <Windows.h>
+#include <winnt.h>
+#include "import.h"
 
 void processArgs(const int& argc, char** argv, LPSTR& fileName, LPSTR& icoName);
-void getFileBase(HANDLE& hFile, HANDLE& hFileMapping, LPVOID& lpFileBase, LPCSTR& fileName);
+void getFileBase(HANDLE& hFile, HANDLE& hFileMapping, LPVOID& lpFileBase, LPSTR fileName);
+void exeDump(LPVOID lpFileBase);
+void dumpImports(LPVOID lpFileBase, PIMAGE_NT_HEADERS pNTHeader, PIMAGE_OPTIONAL_HEADER pImgOptHeader);
+DWORD Rva2Offset(DWORD rva, PIMAGE_SECTION_HEADER psh, PIMAGE_NT_HEADERS pnt);
 
 int main(int argc, char* argv[])
 {
@@ -13,14 +18,13 @@ int main(int argc, char* argv[])
 	HANDLE hFile;
 	HANDLE hFileMapping;
 	LPVOID lpFileBase;
-	PIMAGE_DOS_HEADER dosHeader;
-	PIMAGE_NT_HEADERS peHeader;
 
 	processArgs(argc, argv, fileName, icoName);
 	getFileBase(hFile, hFileMapping, lpFileBase, fileName);
-	dosHeader = (PIMAGE_DOS_HEADER)lpFileBase;
-
+	exeDump(lpFileBase);
 	
+	CloseHandle(hFile);
+	CloseHandle(hFileMapping);
 	system("pause");
 }
 
@@ -63,7 +67,7 @@ void processArgs(const int& argc, char** argv, LPSTR& fileName, LPSTR& icoName)
 		<< "Ico name: " << icoName << '\n';
 }
 
-void getFileBase(HANDLE& hFile, HANDLE& hFileMapping, LPVOID& lpFileBase, LPCSTR& fileName)
+void getFileBase(HANDLE& hFile, HANDLE& hFileMapping, LPVOID& lpFileBase, LPSTR fileName)
 {
 	try
 	{
@@ -96,4 +100,72 @@ void getFileBase(HANDLE& hFile, HANDLE& hFileMapping, LPVOID& lpFileBase, LPCSTR
 		std::cerr << ex.what() << '\n';
 		exit(3);
 	}
+}
+
+void exeDump(LPVOID lpFileBase)
+{
+	PIMAGE_DOS_HEADER pDosHeader;
+	PIMAGE_NT_HEADERS pNTHeader;
+	PIMAGE_OPTIONAL_HEADER pImgOptHeader;
+
+	try
+	{
+		if (pDosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(lpFileBase); pDosHeader->e_magic != IMAGE_DOS_SIGNATURE)
+			throw std::runtime_error("Not a DOS signature");
+
+		if (pNTHeader = reinterpret_cast<PIMAGE_NT_HEADERS>(reinterpret_cast<DWORD>(pDosHeader) + pDosHeader->e_lfanew); pNTHeader->Signature != IMAGE_NT_SIGNATURE)
+			throw std::runtime_error("Not a NT signature");
+
+		pImgOptHeader = reinterpret_cast<PIMAGE_OPTIONAL_HEADER>(reinterpret_cast<DWORD>(pNTHeader) + sizeof(IMAGE_NT_SIGNATURE) + sizeof(IMAGE_FILE_HEADER));
+	}
+	catch (const std::runtime_error& ex)
+	{
+		std::cerr << ex.what() << '\n';
+		exit(4);
+	}
+
+	if (pImgOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size != 0)
+	{
+		dumpImports(lpFileBase, pNTHeader, pImgOptHeader);
+	}
+	else
+	{
+		std::cout << "Import table doesn't exist\n";
+	}
+}
+
+void dumpImports(LPVOID lpFileBase, PIMAGE_NT_HEADERS pNTHeader, PIMAGE_OPTIONAL_HEADER pImgOptHeader)
+{
+	PIMAGE_SECTION_HEADER pSech = IMAGE_FIRST_SECTION(pNTHeader);
+	PIMAGE_IMPORT_DESCRIPTOR pImportDescriptor = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>((DWORD)lpFileBase +
+		Rva2Offset(pImgOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, pSech, pNTHeader));
+
+	size_t i = 0;
+	while (pImportDescriptor->Name != NULL)
+	{
+		std::cout << reinterpret_cast<PCHAR>(reinterpret_cast<DWORD>(lpFileBase) + Rva2Offset(pImportDescriptor->Name, pSech, pNTHeader)) << '\n';
+		pImportDescriptor++; 
+		i++;
+	}
+}
+
+DWORD Rva2Offset(DWORD rva, PIMAGE_SECTION_HEADER psh, PIMAGE_NT_HEADERS pnt)
+{
+	size_t i = 0;
+	PIMAGE_SECTION_HEADER pSeh;
+	if (rva == 0)
+	{
+		return (rva);
+	}
+	pSeh = psh;
+	for (i = 0; i < pnt->FileHeader.NumberOfSections; i++)
+	{
+		if (rva >= pSeh->VirtualAddress && rva < pSeh->VirtualAddress +
+			pSeh->Misc.VirtualSize)
+		{
+			break;
+		}
+		pSeh++;
+	}
+	return (rva - pSeh->VirtualAddress + pSeh->PointerToRawData);
 }
