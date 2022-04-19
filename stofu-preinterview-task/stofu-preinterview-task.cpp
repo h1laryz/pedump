@@ -104,9 +104,9 @@ void getFileBase(HANDLE& hFile, HANDLE& hFileMapping, LPVOID& lpFileBase, LPSTR 
 
 void exeDump(LPVOID lpFileBase)
 {
-	PIMAGE_DOS_HEADER pDosHeader;
-	PIMAGE_NT_HEADERS pNTHeader;
-	PIMAGE_OPTIONAL_HEADER pImgOptHeader;
+	PIMAGE_DOS_HEADER		pDosHeader;
+	PIMAGE_NT_HEADERS		pNTHeader;
+	PIMAGE_OPTIONAL_HEADER	pImgOptHeader;
 
 	try
 	{
@@ -136,16 +136,28 @@ void exeDump(LPVOID lpFileBase)
 
 void dumpImports(LPVOID lpFileBase, PIMAGE_NT_HEADERS pNTHeader, PIMAGE_OPTIONAL_HEADER pImgOptHeader)
 {
-	PIMAGE_SECTION_HEADER pSech = IMAGE_FIRST_SECTION(pNTHeader);
-	PIMAGE_IMPORT_DESCRIPTOR pImportDescriptor = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>((DWORD)lpFileBase +
-		Rva2Offset(pImgOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, pSech, pNTHeader));
+	PIMAGE_SECTION_HEADER		pSech = IMAGE_FIRST_SECTION(pNTHeader);
+	PIMAGE_IMPORT_DESCRIPTOR	pImportDescriptor = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>((DWORD)lpFileBase + Rva2Offset(pImgOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, pSech, pNTHeader));
+	PIMAGE_THUNK_DATA			originalFirstThunk = NULL;
 
-	size_t i = 0;
 	while (pImportDescriptor->Name != NULL)
 	{
-		std::cout << reinterpret_cast<PCHAR>(reinterpret_cast<DWORD>(lpFileBase) + Rva2Offset(pImportDescriptor->Name, pSech, pNTHeader)) << '\n';
-		pImportDescriptor++; 
-		i++;
+		// libraries
+		PCHAR libraryName = reinterpret_cast<PCHAR>(reinterpret_cast<DWORD>(lpFileBase) + Rva2Offset(pImportDescriptor->Name, pSech, pNTHeader));
+
+		originalFirstThunk = reinterpret_cast<PIMAGE_THUNK_DATA>(reinterpret_cast<DWORD>(lpFileBase) + 
+			Rva2Offset(pImportDescriptor->OriginalFirstThunk, pSech, pNTHeader));
+
+		std::cout << libraryName << '\n';
+
+		// functions
+		while (originalFirstThunk->u1.AddressOfData != NULL)
+		{
+			PIMAGE_IMPORT_BY_NAME functionName = (PIMAGE_IMPORT_BY_NAME)((DWORD)lpFileBase + Rva2Offset(originalFirstThunk->u1.AddressOfData, pSech, pNTHeader));
+			std::cout << '\t' << functionName->Name << '\n';
+			++originalFirstThunk;
+		}
+		++pImportDescriptor;
 	}
 }
 
