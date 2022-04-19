@@ -139,6 +139,7 @@ void dumpImports(LPVOID lpFileBase, PIMAGE_NT_HEADERS pNTHeader, PIMAGE_OPTIONAL
 	PIMAGE_SECTION_HEADER		pSech = IMAGE_FIRST_SECTION(pNTHeader);
 	PIMAGE_IMPORT_DESCRIPTOR	pImportDescriptor = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>((DWORD)lpFileBase + Rva2Offset(pImgOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, pSech, pNTHeader));
 	PIMAGE_THUNK_DATA			originalFirstThunk = NULL;
+	size_t countExistsW = 0;
 
 	while (pImportDescriptor->Name != NULL)
 	{
@@ -156,9 +157,17 @@ void dumpImports(LPVOID lpFileBase, PIMAGE_NT_HEADERS pNTHeader, PIMAGE_OPTIONAL
 			PIMAGE_IMPORT_BY_NAME functionName = (PIMAGE_IMPORT_BY_NAME)((DWORD)lpFileBase + Rva2Offset(originalFirstThunk->u1.AddressOfData, pSech, pNTHeader));
 			std::cout << '\t' << functionName->Name << '\n';
 			++originalFirstThunk;
+
+			
+			if (strstr((char* const)functionName->Name, "w") || strstr((char* const)functionName->Name, "W"))
+			{
+				++countExistsW;
+			}
 		}
 		++pImportDescriptor;
 	}
+
+	std::cout << "2) Number of functions that contain letter W(w): " << countExistsW << '\n';
 }
 
 DWORD Rva2Offset(DWORD rva, PIMAGE_SECTION_HEADER psh, PIMAGE_NT_HEADERS pnt)
