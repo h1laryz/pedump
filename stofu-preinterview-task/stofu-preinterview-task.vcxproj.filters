@@ -13,18 +13,33 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="pedump">
+      <UniqueIdentifier>{75144d4d-69dd-403c-8b07-859a56e07e23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pch">
+      <UniqueIdentifier>{e7fd99e9-2c93-4072-a6d1-5055105c4c35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PEFile">
+      <UniqueIdentifier>{feeee963-51f0-4fed-b45a-6cde6f4b3f5c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stofu-preinterview-task.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>pch</Filter>
+    </ClCompile>
+    <ClCompile Include="PEFile.cpp">
+      <Filter>PEFile</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
-      <Filter>Header Files</Filter>
+      <Filter>pch</Filter>
+    </ClInclude>
+    <ClInclude Include="PEFile.h">
+      <Filter>PEFile</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
