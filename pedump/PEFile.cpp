@@ -85,33 +85,25 @@ void PEFile::dumpImports()
 	PIMAGE_IMPORT_DESCRIPTOR	pImportDescriptor = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>((DWORD)lpFileBase + Rva2Offset(pImgOptHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress));
 	PIMAGE_THUNK_DATA			originalFirstThunk = NULL;
 
-	size_t countExistsW = 0;
 	while (pImportDescriptor->Name != NULL)
 	{
 		PCHAR libraryName = reinterpret_cast<PCHAR>(reinterpret_cast<DWORD>(lpFileBase) + Rva2Offset(pImportDescriptor->Name));
 		originalFirstThunk = reinterpret_cast<PIMAGE_THUNK_DATA>(reinterpret_cast<DWORD>(lpFileBase) + Rva2Offset(pImportDescriptor->OriginalFirstThunk));
 		
 		std::cout << libraryName << '\n';
-		this->outputFunctions(originalFirstThunk, countExistsW);
+		this->outputFunctions(originalFirstThunk);
 
 		++pImportDescriptor;
 	}
-
-	std::cout << "Number of functions that contain letter W(w): " << countExistsW << '\n';
 }
 
-void PEFile::outputFunctions(PIMAGE_THUNK_DATA originalFirstThunk, size_t& countExistsW)
+void PEFile::outputFunctions(PIMAGE_THUNK_DATA originalFirstThunk)
 {
 	while (originalFirstThunk->u1.AddressOfData != NULL)
 	{
 		PIMAGE_IMPORT_BY_NAME functionName = (PIMAGE_IMPORT_BY_NAME)((DWORD)lpFileBase + Rva2Offset(originalFirstThunk->u1.AddressOfData));
 		std::cout << '\t' << functionName->Name << '\n';
 		++originalFirstThunk;
-
-		if (strstr((char* const)functionName->Name, "w") || strstr((char* const)functionName->Name, "W"))
-		{
-			++countExistsW;
-		}
 	}
 }
 
