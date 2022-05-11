@@ -18,7 +18,7 @@ private:
 	DWORD Rva2Offset(DWORD rva);
 
 	void dumpImports();
-	void outputFunctions(PIMAGE_THUNK_DATA originalFirstThunk, size_t& countExistsW);
+	void outputFunctions(PIMAGE_THUNK_DATA originalFirstThunk);
 public:
 	PEFile(LPSTR fileName);
 	~PEFile();
